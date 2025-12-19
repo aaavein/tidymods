@@ -16,7 +16,7 @@
 ### 🤝 contributions
 Help expand compatibility by categorizing mods that aren't covered yet:
 
-- **submit a pull request** — Add missing mods to [**BuiltInCategories.java**](https://github.com/aaavein/tidymods/blob/main/src/main/java/net/aaavein/tidymods/client/BuiltInCategories.java).
+- **submit a pull request** — Add missing mods to [**BuiltInCategories.java**](https://github.com/aaavein/tidymods/blob/master/src/main/java/net/aaavein/tidymods/client/BuiltInCategories.java).
 - **notify mod authors** — Let them know they can easily assign a category to their mod for native support.
 
 Every contribution helps keep the mod list organized for everyone.

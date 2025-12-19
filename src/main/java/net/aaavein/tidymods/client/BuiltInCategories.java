@@ -201,6 +201,7 @@ public final class BuiltInCategories {
         );
 
         library(
+                "tiny_config",
                 "mixed_litter",
                 "blueprint",
                 "polytone",

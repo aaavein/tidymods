@@ -28,6 +28,10 @@ public final class TidyModsConfig {
 
     private TidyModsConfig() {}
 
+    public static boolean hideRealmsButton() {
+        return CONFIG.hideRealmsButton.get();
+    }
+
     public static boolean showModCount() {
         return CONFIG.showModCount.get();
     }
@@ -143,6 +147,8 @@ public final class TidyModsConfig {
 
     private static class Config {
 
+        final ModConfigSpec.BooleanValue hideRealmsButton;
+
         final ModConfigSpec.BooleanValue showModCount;
         final ModConfigSpec.BooleanValue showModIds;
 
@@ -178,6 +184,10 @@ public final class TidyModsConfig {
             showModIds = builder
                     .comment(" Displays technical mod IDs instead of human-readable names.")
                     .define("show_mod_ids", false);
+
+            hideRealmsButton = builder
+                    .comment(" Hides the Realms button on the title screen.")
+                    .define("hide_realms_button", true);
 
             builder.pop();
 

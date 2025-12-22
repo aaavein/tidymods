@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Consumer;
@@ -76,13 +77,10 @@ public class AutoCompleteEditBox extends EditBox {
 
     private int[] calculateColors(String text) {
         int[] colors = new int[text.length()];
-        for (int j = 0; j < colors.length; j++) {
-            colors[j] = DEFAULT_TEXT_COLOR;
-        }
+        Arrays.fill(colors, DEFAULT_TEXT_COLOR);
 
         int i = 0;
         while (i < text.length()) {
-            // Skip spaces
             if (text.charAt(i) == ' ') {
                 colors[i] = DEFAULT_TEXT_COLOR;
                 i++;
@@ -93,30 +91,25 @@ public class AutoCompleteEditBox extends EditBox {
 
             if (isFilterPrefix(firstChar)) {
                 int filterColor = getFilterColor(firstChar);
-                colors[i] = filterColor; // prefix
+                colors[i] = filterColor;
                 i++;
 
                 if (i < text.length() && text.charAt(i) == '"') {
-                    // Quoted filter value
-                    colors[i] = filterColor; // opening quote
-                    i++;
-                    while (i < text.length() && text.charAt(i) != '"') {
+                    do {
+                        colors[i] = filterColor;
+                        i++;
+                    } while (i < text.length() && text.charAt(i) != '"');
+                    if (i < text.length()) {
                         colors[i] = filterColor;
                         i++;
                     }
-                    if (i < text.length()) {
-                        colors[i] = filterColor; // closing quote
-                        i++;
-                    }
                 } else {
-                    // Unquoted filter value
                     while (i < text.length() && text.charAt(i) != ' ') {
                         colors[i] = filterColor;
                         i++;
                     }
                 }
             } else {
-                // Plain text token
                 while (i < text.length() && text.charAt(i) != ' ') {
                     colors[i] = DEFAULT_TEXT_COLOR;
                     i++;
@@ -175,7 +168,6 @@ public class AutoCompleteEditBox extends EditBox {
             return "";
         }
 
-        // Find the start of the current token, respecting quotes
         int tokenStart = 0;
         boolean inQuotes = false;
 
@@ -224,12 +216,10 @@ public class AutoCompleteEditBox extends EditBox {
 
         if (isFilter) {
             if (currentToken.length() > 1 && currentToken.charAt(1) == '"') {
-                // Quoted filter: !"partial
                 isQuoted = true;
-                searchPart = currentToken.substring(2); // Skip prefix and quote
+                searchPart = currentToken.substring(2);
             } else {
-                // Unquoted filter: !partial
-                searchPart = currentToken.substring(1); // Skip prefix
+                searchPart = currentToken.substring(1);
             }
         } else {
             searchPart = currentToken;
@@ -249,13 +239,11 @@ public class AutoCompleteEditBox extends EditBox {
                     continue;
                 }
 
-                // Get the value part of the candidate (after prefix)
                 String candValue = candidate.substring(1);
 
                 if (candValue.toLowerCase(Locale.ROOT).startsWith(searchLower)) {
                     String suggestion = candValue.substring(searchPart.length());
 
-                    // If value contains space and we're in quoted mode, add closing quote
                     if (candValue.contains(" ") && isQuoted) {
                         suggestion = suggestion + "\"";
                     }
@@ -288,10 +276,8 @@ public class AutoCompleteEditBox extends EditBox {
                 boolean isAlreadyQuoted = currentToken.length() > 1 && currentToken.charAt(1) == '"';
 
                 if (!isAlreadyQuoted) {
-                    // Check if completed value would have spaces
                     String valueWithoutPrefix = currentToken.substring(1) + currentSuggestion;
                     if (valueWithoutPrefix.contains(" ")) {
-                        // Need to insert quotes
                         int tokenStartInValue = currentValue.length() - currentToken.length();
                         char prefix = currentToken.charAt(0);
                         String newValue = currentValue.substring(0, tokenStartInValue)

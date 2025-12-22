@@ -90,5 +90,7 @@
   "tidymods.gui.tooltip.authors": "Auteurs",
   "tidymods.gui.tooltip.license": "Licence",
   "tidymods.gui.website.tooltip": "Ouvrir le Site Web",
-  "tidymods.gui.website.unavailable": "Site web non disponible"
+  "tidymods.gui.website.unavailable": "Site web non disponible",
+  "tidymods.configuration.hide_realms_button": "Cacher le Bouton Realms",
+  "tidymods.configuration.hide_realms_button.tooltip": "Cache le bouton Realms sur l'écran titre."
 }

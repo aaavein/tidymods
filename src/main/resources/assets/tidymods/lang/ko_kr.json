@@ -90,5 +90,7 @@
   "tidymods.gui.tooltip.authors": "작성자",
   "tidymods.gui.tooltip.license": "라이선스",
   "tidymods.gui.website.tooltip": "웹사이트 열기",
-  "tidymods.gui.website.unavailable": "웹사이트 없음"
+  "tidymods.gui.website.unavailable": "웹사이트 없음",
+  "tidymods.configuration.hide_realms_button": "Realms 버튼 숨기기",
+  "tidymods.configuration.hide_realms_button.tooltip": "타이틀 화면에서 Realms 버튼을 숨깁니다."
 }

@@ -90,5 +90,7 @@
   "tidymods.gui.tooltip.authors": "Авторы",
   "tidymods.gui.tooltip.license": "Лицензия",
   "tidymods.gui.website.tooltip": "Открыть сайт",
-  "tidymods.gui.website.unavailable": "Сайт недоступен"
+  "tidymods.gui.website.unavailable": "Сайт недоступен",
+  "tidymods.configuration.hide_realms_button": "Скрыть кнопку Realms",
+  "tidymods.configuration.hide_realms_button.tooltip": "Скрывает кнопку Realms на главном экране."
 }

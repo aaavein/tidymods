@@ -90,5 +90,7 @@
   "tidymods.gui.tooltip.authors": "作者",
   "tidymods.gui.tooltip.license": "ライセンス",
   "tidymods.gui.website.tooltip": "ウェブサイトを開く",
-  "tidymods.gui.website.unavailable": "ウェブサイトなし"
+  "tidymods.gui.website.unavailable": "ウェブサイトなし",
+  "tidymods.configuration.hide_realms_button": "Realmsボタンを非表示",
+  "tidymods.configuration.hide_realms_button.tooltip": "タイトル画面のRealmsボタンを非表示にします。"
 }

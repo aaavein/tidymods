@@ -90,5 +90,7 @@
   "tidymods.gui.tooltip.authors": "Autorzy",
   "tidymods.gui.tooltip.license": "Licencja",
   "tidymods.gui.website.tooltip": "Otwórz Stronę",
-  "tidymods.gui.website.unavailable": "Strona niedostępna"
+  "tidymods.gui.website.unavailable": "Strona niedostępna",
+  "tidymods.configuration.hide_realms_button": "Ukryj Przycisk Realms",
+  "tidymods.configuration.hide_realms_button.tooltip": "Ukrywa przycisk Realms na ekranie tytułowym."
 }

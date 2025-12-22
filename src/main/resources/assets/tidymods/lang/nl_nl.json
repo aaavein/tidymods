@@ -90,5 +90,7 @@
   "tidymods.gui.tooltip.authors": "Auteurs",
   "tidymods.gui.tooltip.license": "Licentie",
   "tidymods.gui.website.tooltip": "Website Openen",
-  "tidymods.gui.website.unavailable": "Geen website beschikbaar"
+  "tidymods.gui.website.unavailable": "Geen website beschikbaar",
+  "tidymods.configuration.hide_realms_button": "Realms-knop Verbergen",
+  "tidymods.configuration.hide_realms_button.tooltip": "Verbergt de Realms-knop op het titelscherm."
 }

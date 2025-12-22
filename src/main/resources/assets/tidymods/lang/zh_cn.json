@@ -90,5 +90,7 @@
   "tidymods.gui.tooltip.authors": "作者",
   "tidymods.gui.tooltip.license": "许可证",
   "tidymods.gui.website.tooltip": "打开网站",
-  "tidymods.gui.website.unavailable": "无可用网站"
+  "tidymods.gui.website.unavailable": "无可用网站",
+  "tidymods.configuration.hide_realms_button": "隐藏Realms按钮",
+  "tidymods.configuration.hide_realms_button.tooltip": "隐藏标题界面上的Realms按钮。"
 }

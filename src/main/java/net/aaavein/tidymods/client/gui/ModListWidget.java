@@ -133,42 +133,110 @@ public class ModListWidget extends ContainerObjectSelectionList<ModListWidget.En
     }
 
     private boolean matches(ModData mod) {
-        if (query.startsWith("#")) {
-            String categoryQuery = query.substring(1);
-            if (categoryQuery.isEmpty()) {
-                return true;
-            }
-            String modCategory = ModDataManager.category(mod.modId());
-            return modCategory.contains(categoryQuery);
+        if (query.isEmpty()) {
+            return true;
         }
 
-        if (query.startsWith("@")) {
-            String modIdQuery = query.substring(1);
-            if (modIdQuery.isEmpty()) {
-                return true;
+        List<ParsedFilter> filters = parseFilters(query);
+
+        for (ParsedFilter filter : filters) {
+            if (!matchesSingleFilter(mod, filter)) {
+                return false;
             }
-            return mod.modId().toLowerCase(Locale.ROOT).contains(modIdQuery);
         }
 
-        if (query.startsWith("!")) {
-            String authorQuery = query.substring(1);
-            if (authorQuery.isEmpty()) {
-                return true;
+        return true;
+    }
+
+    private List<ParsedFilter> parseFilters(String text) {
+        List<ParsedFilter> filters = new ArrayList<>();
+        int i = 0;
+
+        while (i < text.length()) {
+            while (i < text.length() && text.charAt(i) == ' ') {
+                i++;
             }
-            String authors = mod.authors();
-            return authors != null && authors.toLowerCase(Locale.ROOT).contains(authorQuery);
+            if (i >= text.length()) {
+                break;
+            }
+
+            char firstChar = text.charAt(i);
+
+            if (isFilterPrefix(firstChar)) {
+                i++;
+                String value;
+
+                if (i < text.length() && text.charAt(i) == '"') {
+                    i++;
+                    int start = i;
+                    while (i < text.length() && text.charAt(i) != '"') {
+                        i++;
+                    }
+                    value = text.substring(start, i);
+                    if (i < text.length()) {
+                        i++;
+                    }
+                } else {
+                    int start = i;
+                    while (i < text.length() && text.charAt(i) != ' ') {
+                        i++;
+                    }
+                    value = text.substring(start, i);
+                }
+
+                filters.add(new ParsedFilter(firstChar, value.toLowerCase(Locale.ROOT)));
+            } else {
+                String value;
+
+                if (firstChar == '"') {
+                    i++;
+                    int start = i;
+                    while (i < text.length() && text.charAt(i) != '"') {
+                        i++;
+                    }
+                    value = text.substring(start, i);
+                    if (i < text.length()) {
+                        i++;
+                    }
+                } else {
+                    int start = i;
+                    while (i < text.length() && text.charAt(i) != ' ') {
+                        i++;
+                    }
+                    value = text.substring(start, i);
+                }
+
+                filters.add(new ParsedFilter('\0', value.toLowerCase(Locale.ROOT)));
+            }
         }
 
-        if (query.startsWith("$")) {
-            String licenseQuery = query.substring(1);
-            if (licenseQuery.isEmpty()) {
-                return true;
-            }
-            String license = mod.license();
-            return license != null && license.toLowerCase(Locale.ROOT).contains(licenseQuery);
+        return filters;
+    }
+
+    private boolean matchesSingleFilter(ModData mod, ParsedFilter filter) {
+        if (filter.value.isEmpty()) {
+            return true;
         }
 
-        return mod.displayName().toLowerCase(Locale.ROOT).contains(query);
+        return switch (filter.type) {
+            case '#' -> ModDataManager.category(mod.modId()).toLowerCase(Locale.ROOT).contains(filter.value);
+            case '@' -> mod.modId().toLowerCase(Locale.ROOT).contains(filter.value);
+            case '!' -> {
+                String authors = mod.authors();
+                yield authors != null && authors.toLowerCase(Locale.ROOT).contains(filter.value);
+            }
+            case '$' -> {
+                String license = mod.license();
+                yield license != null && license.toLowerCase(Locale.ROOT).contains(filter.value);
+            }
+            default -> mod.displayName().toLowerCase(Locale.ROOT).contains(filter.value);
+        };
+    }
+
+    private record ParsedFilter(char type, String value) {}
+
+    private boolean isFilterPrefix(char c) {
+        return c == '#' || c == '@' || c == '!' || c == '$';
     }
 
     @Override

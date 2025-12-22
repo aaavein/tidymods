@@ -9,6 +9,7 @@ import net.minecraft.util.FormattedCharSequence;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Consumer;
@@ -50,35 +51,145 @@ public class AutoCompleteEditBox extends EditBox {
     }
 
     private FormattedCharSequence formatText(String text, int firstCharIndex) {
-        return FormattedCharSequence.forward(text, Style.EMPTY.withColor(getTextColor()));
+        if (text.isEmpty()) {
+            return FormattedCharSequence.EMPTY;
+        }
+
+        int[] colors = calculateColors(text);
+
+        List<FormattedCharSequence> parts = new ArrayList<>();
+        int i = 0;
+        while (i < text.length()) {
+            int color = colors[i];
+            int start = i;
+            while (i < text.length() && colors[i] == color) {
+                i++;
+            }
+            parts.add(FormattedCharSequence.forward(
+                    text.substring(start, i),
+                    Style.EMPTY.withColor(color)
+            ));
+        }
+
+        return FormattedCharSequence.composite(parts);
     }
 
-    private int getTextColor() {
-        String value = getValue();
-        if (value.startsWith("#")) {
-            return CATEGORY_TEXT_COLOR;
-        } else if (value.startsWith("@")) {
-            return MODID_TEXT_COLOR;
-        } else if (value.startsWith("!")) {
-            return AUTHOR_TEXT_COLOR;
-        } else if (value.startsWith("$")) {
-            return LICENSE_TEXT_COLOR;
+    private int[] calculateColors(String text) {
+        int[] colors = new int[text.length()];
+        for (int j = 0; j < colors.length; j++) {
+            colors[j] = DEFAULT_TEXT_COLOR;
         }
-        return DEFAULT_TEXT_COLOR;
+
+        int i = 0;
+        while (i < text.length()) {
+            // Skip spaces
+            if (text.charAt(i) == ' ') {
+                colors[i] = DEFAULT_TEXT_COLOR;
+                i++;
+                continue;
+            }
+
+            char firstChar = text.charAt(i);
+
+            if (isFilterPrefix(firstChar)) {
+                int filterColor = getFilterColor(firstChar);
+                colors[i] = filterColor; // prefix
+                i++;
+
+                if (i < text.length() && text.charAt(i) == '"') {
+                    // Quoted filter value
+                    colors[i] = filterColor; // opening quote
+                    i++;
+                    while (i < text.length() && text.charAt(i) != '"') {
+                        colors[i] = filterColor;
+                        i++;
+                    }
+                    if (i < text.length()) {
+                        colors[i] = filterColor; // closing quote
+                        i++;
+                    }
+                } else {
+                    // Unquoted filter value
+                    while (i < text.length() && text.charAt(i) != ' ') {
+                        colors[i] = filterColor;
+                        i++;
+                    }
+                }
+            } else {
+                // Plain text token
+                while (i < text.length() && text.charAt(i) != ' ') {
+                    colors[i] = DEFAULT_TEXT_COLOR;
+                    i++;
+                }
+            }
+        }
+
+        return colors;
+    }
+
+    private boolean isFilterPrefix(char c) {
+        return c == '#' || c == '@' || c == '!' || c == '$';
+    }
+
+    private int getFilterColor(char prefix) {
+        return switch (prefix) {
+            case '#' -> CATEGORY_TEXT_COLOR;
+            case '@' -> MODID_TEXT_COLOR;
+            case '!' -> AUTHOR_TEXT_COLOR;
+            case '$' -> LICENSE_TEXT_COLOR;
+            default -> DEFAULT_TEXT_COLOR;
+        };
+    }
+
+    private int getFilterSuggestionColor(char prefix) {
+        return switch (prefix) {
+            case '#' -> CATEGORY_SUGGESTION_COLOR;
+            case '@' -> MODID_SUGGESTION_COLOR;
+            case '!' -> AUTHOR_SUGGESTION_COLOR;
+            case '$' -> LICENSE_SUGGESTION_COLOR;
+            default -> DEFAULT_SUGGESTION_COLOR;
+        };
     }
 
     private int getSuggestionColor() {
         String value = getValue();
-        if (value.startsWith("#")) {
-            return CATEGORY_SUGGESTION_COLOR;
-        } else if (value.startsWith("@")) {
-            return MODID_SUGGESTION_COLOR;
-        } else if (value.startsWith("!")) {
-            return AUTHOR_SUGGESTION_COLOR;
-        } else if (value.startsWith("$")) {
-            return LICENSE_SUGGESTION_COLOR;
+        if (value.isEmpty()) {
+            return DEFAULT_SUGGESTION_COLOR;
         }
+
+        String currentToken = getCurrentToken(value);
+        if (currentToken.isEmpty()) {
+            return DEFAULT_SUGGESTION_COLOR;
+        }
+
+        char firstChar = currentToken.charAt(0);
+        if (isFilterPrefix(firstChar)) {
+            return getFilterSuggestionColor(firstChar);
+        }
+
         return DEFAULT_SUGGESTION_COLOR;
+    }
+
+    private String getCurrentToken(String text) {
+        if (text.isEmpty()) {
+            return "";
+        }
+
+        // Find the start of the current token, respecting quotes
+        int tokenStart = 0;
+        boolean inQuotes = false;
+
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+
+            if (c == '"') {
+                inQuotes = !inQuotes;
+            } else if (c == ' ' && !inQuotes) {
+                tokenStart = i + 1;
+            }
+        }
+
+        return text.substring(tokenStart);
     }
 
     @Override
@@ -99,20 +210,100 @@ public class AutoCompleteEditBox extends EditBox {
             return;
         }
 
-        String lower = text.toLowerCase(Locale.ROOT);
+        String currentToken = getCurrentToken(text);
+        if (currentToken.isEmpty()) {
+            currentSuggestion = "";
+            return;
+        }
+
+        char firstChar = currentToken.charAt(0);
+        boolean isFilter = isFilterPrefix(firstChar);
+
+        String searchPart;
+        boolean isQuoted = false;
+
+        if (isFilter) {
+            if (currentToken.length() > 1 && currentToken.charAt(1) == '"') {
+                // Quoted filter: !"partial
+                isQuoted = true;
+                searchPart = currentToken.substring(2); // Skip prefix and quote
+            } else {
+                // Unquoted filter: !partial
+                searchPart = currentToken.substring(1); // Skip prefix
+            }
+        } else {
+            searchPart = currentToken;
+        }
+
+        String searchLower = searchPart.toLowerCase(Locale.ROOT);
+
         for (String candidate : suggestionsSupplier.get()) {
-            if (candidate.toLowerCase(Locale.ROOT).startsWith(lower)) {
-                currentSuggestion = candidate.substring(text.length());
-                return;
+            if (candidate.isEmpty()) {
+                continue;
+            }
+
+            char candFirst = candidate.charAt(0);
+
+            if (isFilter) {
+                if (candFirst != firstChar) {
+                    continue;
+                }
+
+                // Get the value part of the candidate (after prefix)
+                String candValue = candidate.substring(1);
+
+                if (candValue.toLowerCase(Locale.ROOT).startsWith(searchLower)) {
+                    String suggestion = candValue.substring(searchPart.length());
+
+                    // If value contains space and we're in quoted mode, add closing quote
+                    if (candValue.contains(" ") && isQuoted) {
+                        suggestion = suggestion + "\"";
+                    }
+
+                    currentSuggestion = suggestion;
+                    return;
+                }
+            } else {
+                if (isFilterPrefix(candFirst)) {
+                    continue;
+                }
+
+                if (candidate.toLowerCase(Locale.ROOT).startsWith(searchLower)) {
+                    currentSuggestion = candidate.substring(searchPart.length());
+                    return;
+                }
             }
         }
+
         currentSuggestion = "";
     }
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (keyCode == GLFW.GLFW_KEY_TAB && !currentSuggestion.isEmpty() && isFocused()) {
-            setValue(getValue() + currentSuggestion);
+            String currentValue = getValue();
+            String currentToken = getCurrentToken(currentValue);
+
+            if (!currentToken.isEmpty() && isFilterPrefix(currentToken.charAt(0))) {
+                boolean isAlreadyQuoted = currentToken.length() > 1 && currentToken.charAt(1) == '"';
+
+                if (!isAlreadyQuoted) {
+                    // Check if completed value would have spaces
+                    String valueWithoutPrefix = currentToken.substring(1) + currentSuggestion;
+                    if (valueWithoutPrefix.contains(" ")) {
+                        // Need to insert quotes
+                        int tokenStartInValue = currentValue.length() - currentToken.length();
+                        char prefix = currentToken.charAt(0);
+                        String newValue = currentValue.substring(0, tokenStartInValue)
+                                + prefix + "\"" + valueWithoutPrefix + "\"";
+                        setValue(newValue);
+                        moveCursorToEnd(false);
+                        return true;
+                    }
+                }
+            }
+
+            setValue(currentValue + currentSuggestion);
             moveCursorToEnd(false);
             return true;
         }
